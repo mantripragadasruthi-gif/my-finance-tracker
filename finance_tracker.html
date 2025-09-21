@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Finance Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        :root {
+            /* Light Theme */
+            --bg-primary: #f3f4f6;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f9fafb;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --border-color: #e5e7eb;
+            --shadow-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .creme-theme {
+            --bg-primary: #fbf5e5;
+            --bg-secondary: #fefcbf;
+            --bg-tertiary: #f8f6e7;
+            --text-primary: #3d3b24;
+            --text-secondary: #6e6b4d;
+            --border-color: #d1c9ac;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .dark-theme {
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --bg-tertiary: #1f2937;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --border-color: #374151;
+            --shadow-color: rgba(0, 0, 0, 0.2);
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        .container {
+            background-color: var(--bg-secondary);
+            border-color: var(--border-color);
+        }
+        
+        .container, .bg-gray-50, .border-gray-100 {
+            background-color: var(--bg-secondary);
+            border-color: var(--border-color);
+        }
+        
+        .shadow-lg {
+            box-shadow: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -2px var(--shadow-color);
+        }
+        
+        .progress-bar {
+            height: 10px;
+            border-radius: 9999px;
+            transition: width 0.3s ease-in-out;
+        }
+
+        input, select {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        h1, h2, h3 {
+            color: var(--text-primary);
+        }
+
+        p, span, label {
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 light-theme">
+
+    <div class="container mx-auto rounded-xl shadow-lg p-6 sm:p-8 md:p-10 border">
+        <h1 class="text-3xl sm:text-4xl font-bold text-center mb-4">Personal Finance Tracker</h1>
+        
+        <!-- Theme Switcher -->
+        <div class="flex justify-center mb-6">
+            <div class="bg-gray-200 rounded-full p-1 flex space-x-1 border border-gray-300">
+                <button data-theme="light" class="theme-btn w-12 h-8 rounded-full focus:outline-none transition-colors duration-200 bg-white shadow-sm"></button>
+                <button data-theme="creme" class="theme-btn w-12 h-8 rounded-full focus:outline-none transition-colors duration-200" style="background-color: #fefcbf;"></button>
+                <button data-theme="dark" class="theme-btn w-12 h-8 rounded-full focus:outline-none transition-colors duration-200 bg-gray-800 shadow-sm"></button>
+            </div>
+        </div>
+        
+        <!-- Auth Section -->
+        <div id="auth-section" class="mb-8 p-4 rounded-lg border">
+            <div id="auth-buttons" class="space-y-4">
+                <input type="email" id="auth-email" placeholder="Email" class="w-full p-3 rounded-lg border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200">
+                <input type="password" id="auth-password" placeholder="Password" class="w-full p-3 rounded-lg border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200">
+                <div class="flex space-x-2">
+                    <button id="register-btn" class="flex-1 bg-green-600 text-white font-bold p-3 rounded-lg hover:bg-green-700 transition-colors duration-200">Register</button>
+                    <button id="login-btn" class="flex-1 bg-blue-600 text-white font-bold p-3 rounded-lg hover:bg-blue-700 transition-colors duration-200">Sign In</button>
+                </div>
+                <button id="google-login-btn" class="w-full bg-red-600 text-white font-bold p-3 rounded-lg hover:bg-red-700 transition-colors duration-200">
+                    Sign in with Google
+                </button>
+            </div>
+            <div id="user-info" class="hidden flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
+                <p id="user-display" class="font-semibold text-sm"></p>
+                <button id="logout-btn" class="bg-gray-400 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-500 transition-colors duration-200 text-sm">Sign Out</button>
+            </div>
+        </div>
+
+        <!-- Total Balance Display -->
+        <div class="text-center mb-6 p-4 rounded-lg border">
+            <h2 class="text-lg font-semibold">Total Balance</h2>
+            <p id="total-balance" class="text-4xl font-bold mt-2">$0.00</p>
+        </div>
+
+        <!-- Main App Content (private section) -->
+        <div id="private-section" class="hidden">
+            <!-- Add Transaction Form -->
+            <div class="mb-8 p-4 rounded-lg border">
+                <h2 class="text-xl sm:text-2xl font-semibold mb-4">Add New Transaction</h2>
+                <form id="transaction-form" class="space-y-4">
+                    <div>
+                        <input type="text" id="transaction-name" placeholder="Transaction Name" required
+                            class="w-full p-3 rounded-lg border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200">
+                    </div>
+                    <div>
+                        <input type="number" id="transaction-amount" placeholder="Amount" required
+                            class="w-full p-3 rounded-lg border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200">
+                    </div>
+                    <div>
+                        <select id="transaction-type" required
+                                class="w-full p-3 rounded-lg border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200">
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </div>
+                    <div id="category-container" class="hidden">
+                        <select id="transaction-category"
+                                class="w-full p-3 rounded-lg border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200">
+                            <option value="Groceries">Groceries</option>
+                            <option value="Rent">Rent</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Utilities">Utilities</option>
+                            <option value="Transportation">Transportation</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="flex space-x-4">
+                        <button type="submit" id="submit-btn"
+                                class="flex-1 bg-blue-600 text-white font-bold p-3 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                            Add Transaction
+                        </button>
+                        <button type="button" id="cancel-edit-btn"
+                                class="hidden flex-1 bg-gray-400 text-white font-bold p-3 rounded-lg hover:bg-gray-500 transition-colors duration-200">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Recurring Transactions Section -->
+            <div class="mb-8 p-4 rounded-lg border">
+                <h2 class="text-xl sm:text-2xl font-semibold mb-4">Recurring Transactions</h2>
+                <p class="text-sm mb-4">Set up monthly recurring transactions like rent or salary.</p>
+                <form id="recurring-form" class="space-y-4">
+                    <input type="text" id="recurring-name" placeholder="Transaction Name" required class="w-full p-3 rounded-lg border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200">
+                    <input type="number" id="recurring-amount" placeholder="Amount" required class="w-full p-3 rounded-lg border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200">
+                    <select id="recurring-type" required class="w-full p-3 rounded-lg border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200">
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                    </select>
+                    <select id="recurring-category" class="w-full p-3 rounded-lg border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 hidden">
+                        <option value="Groceries">Groceries</option>
+                        <option value="Rent">Rent</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Transportation">Transportation</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <button type="submit" class="w-full bg-purple-600 text-white font-bold p-3 rounded-lg hover:bg-purple-700 transition-colors duration-200">Add Recurring Transaction</button>
+                </form>
+                <div id="recurring-list" class="mt-4 space-y-2"></div>
+            </div>
+
+            <!-- Budget Management Section -->
+            <div class="mt-8 p-4 rounded-lg border">
+                <h2 class="text-xl sm:text-2xl font-semibold mb-4">Manage Budgets</h2>
+                <form id="budget-form" class="space-y-4">
+                    <div id="budget-inputs" class="space-y-3">
+                        <!-- Budget input fields will be inserted here by JavaScript -->
+                    </div>
+                    <button type="submit"
+                            class="w-full bg-indigo-600 text-white font-bold p-3 rounded-lg hover:bg-indigo-700 transition-colors duration-200">
+                        Set Budgets
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Data Visualization Section -->
+        <div class="mb-8 p-4 rounded-lg border">
+            <h2 class="text-xl sm:text-2xl font-semibold mb-4">Financial Overview</h2>
+            <div class="mb-8 p-4 rounded-lg border">
+                <h3 class="text-lg font-semibold mb-2">Total Balance Over Time</h3>
+                <canvas id="balanceChart"></canvas>
+            </div>
+            <div class="p-4 rounded-lg border">
+                <h3 class="text-lg font-semibold mb-2">Monthly Expenses by Category</h3>
+                <canvas id="expensesChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Budget Status Display -->
+        <div class="mb-8 p-4 rounded-lg border">
+            <h2 class="text-xl sm:text-2xl font-semibold mb-4">Budget Status (This Month)</h2>
+            <div id="budget-status" class="space-y-4">
+                <p class="text-center">Set your budgets above to see your progress here.</p>
+            </div>
+        </div>
+
+        <!-- Pie Chart for Expenses -->
+        <div class="p-4 rounded-lg border">
+            <h2 class="text-xl sm:text-2xl font-semibold mb-4">Expense Breakdown by Category</h2>
+            <div id="pie-chart-container" class="flex flex-col items-center justify-center p-4">
+                <!-- Pie chart and legend will be inserted here by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Transaction List -->
+        <div class="mb-8">
+            <div class="flex flex-col sm:flex-row items-center justify-between mb-4 flex-wrap gap-4">
+                <h2 class="text-xl sm:text-2xl font-semibold">Transactions</h2>
+                <div class="flex-1 min-w-[200px] max-w-sm">
+                    <input type="text" id="search-input" placeholder="Search transactions..."
+                           class="w-full p-2 rounded-lg border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200">
+                </div>
+                <div class="flex items-center space-x-2 text-sm flex-wrap gap-2">
+                    <label for="filter-select" class="font-medium">Filter by:</label>
+                    <select id="filter-select" class="p-2 rounded-lg border focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <option value="all">All</option>
+                        <option value="income">Income</option>
+                        <option value="expense">Expenses</option>
+                        <option disabled>--- Categories ---</option>
+                        <option value="Groceries">Groceries</option>
+                        <option value="Rent">Rent</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Transportation">Transportation</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <label for="sort-select" class="font-medium">Sort by:</label>
+                    <select id="sort-select" class="p-2 rounded-lg border focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="highest_amount">Amount (High to Low)</option>
+                        <option value="lowest_amount">Amount (Low to High)</option>
+                    </select>
+                </div>
+            </div>
+            <ul id="transaction-list" class="rounded-lg p-4 space-y-3 border">
+                <!-- Transaction items will be inserted here -->
+                <p class="text-center">No transactions yet.</p>
+            </ul>
+        </div>
+
+        <!-- Public Sharing Section -->
+        <div id="public-share-section" class="mt-8 p-4 rounded-lg border">
+            <h2 class="text-xl sm:text-2xl font-semibold mb-4">Public Sharing</h2>
+            <p class="text-sm mb-4">Publish your current data to create a view-only shareable link. The link will reflect the data at the time of publishing.</p>
+            <button id="publish-btn" class="w-full bg-teal-600 text-white font-bold p-3 rounded-lg hover:bg-teal-700 transition-colors duration-200">
+                Publish & Get Shareable Link
+            </button>
+            <div class="mt-4 hidden" id="link-container">
+                <p class="mb-2">Share this link:</p>
+                <input type="text" id="share-link-input" readonly class="w-full p-2 text-sm rounded-lg border">
+                <button id="copy-link-btn" class="mt-2 w-full bg-gray-400 text-white font-bold p-2 rounded-lg hover:bg-gray-500 transition-colors duration-200">Copy to Clipboard</button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-sm text-gray-500">
+            <p>User ID: <span id="user-id" class="font-mono">Loading...</span></p>
+            <p id="share-view-message" class="text-red-500 font-semibold mt-2 hidden">This is a public, view-only page.</p>
+        </div>
+        
+    </div>
+
+    <!-- Message Box -->
+    <div id="message-box" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg p-6 shadow-xl max-w-sm w-full border">
+            <h3 id="message-title" class="text-xl font-bold mb-2"></h3>
+            <p id="message-text" class="mb-4"></p>
+            <div class="flex justify-end">
+                <button id="message-ok-button" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, getDoc, doc, updateDoc, deleteDoc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signInWithCustomToken, signInAnonymously, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+
+        // Firebase configuration and initialization
+        setLogLevel('debug');
+        
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(__firebase_config);
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        // UI Elements
+        const authSection = document.getElementById('auth-section');
+        const authButtons = document.getElementById('auth-buttons');
+        const userInfo = document.getElementById('user-info');
+        const authEmailInput = document.getElementById('auth-email');
+        const authPasswordInput = document.getElementById('auth-password');
+        const registerBtn = document.getElementById('register-btn');
+        const loginBtn = document.getElementById('login-btn');
+        const googleLoginBtn = document.getElementById('google-login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userDisplay = document.getElementById('user-display');
+        const privateSection = document.getElementById('private-section');
+        const transactionForm = document.getElementById('transaction-form');
+        const transactionList = document.getElementById('transaction-list');
+        const transactionNameInput = document.getElementById('transaction-name');
+        const transactionAmountInput = document.getElementById('transaction-amount');
+        const transactionTypeInput = document.getElementById('transaction-type');
+        const transactionCategoryInput = document.getElementById('transaction-category');
+        const categoryContainer = document.getElementById('category-container');
+        const submitBtn = document.getElementById('submit-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const userIdEl = document.getElementById('user-id');
+        const pieChartContainer = document.getElementById('pie-chart-container');
+        const sortSelect = document.getElementById('sort-select');
+        const filterSelect = document.getElementById('filter-select');
+        const totalBalanceEl = document.getElementById('total-balance');
+        const budgetForm = document.getElementById('budget-form');
+        const budgetInputsContainer = document.getElementById('budget-inputs');
+        const budgetStatusContainer = document.getElementById('budget-status');
+        const searchInput = document.getElementById('search-input');
+        const publicShareSection = document.getElementById('public-share-section');
+        const publishBtn = document.getElementById('publish-btn');
+        const linkContainer = document.getElementById('link-container');
+        const shareLinkInput = document.getElementById('share-link-input');
+        const copyLinkBtn = document.getElementById('copy-link-btn');
+        const shareViewMessage = document.getElementById('share-view-message');
+        const themeButtons = document.querySelectorAll('.theme-btn');
+        const recurringForm = document.getElementById('recurring-form');
+        const recurringNameInput = document.getElementById('recurring-name');
+        const recurringAmountInput = document.getElementById('recurring-amount');
+        const recurringTypeInput = document.getElementById('recurring-type');
+        const recurringCategoryInput = document.getElementById('recurring-category');
+        const recurringList = document.getElementById('recurring-list');
+
+        let userId = '';
+        let isEditMode = false;
+        let docToEditId = null;
+        let currentBudgets = {};
+        
+        let expensesChart, balanceChart;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const publicUserId = urlParams.get('userId');
+        const isPublicView = !!publicUserId;
+
+        const categoryColors = {
+            'Groceries': '#4299e1',   
+            'Rent': '#f6ad55',        
+            'Entertainment': '#9f7aea', 
+            'Utilities': '#48bb78',    
+            'Transportation': '#f6e05e',
+            'Other': '#e53e3e',        
+            'Income': '#38a169',      
+        };
+        const categories = Object.keys(categoryColors).filter(cat => cat !== 'Income');
+
+        // Message Box logic
+        const messageBox = document.getElementById('message-box');
+        const messageTitle = document.getElementById('message-title');
+        const messageText = document.getElementById('message-text');
+        const messageOkButton = document.getElementById('message-ok-button');
+
+        function showMessage(title, text) {
+            messageTitle.textContent = title;
+            messageText.textContent = text;
+            messageBox.classList.remove('hidden');
+            messageBox.classList.add('flex');
+        }
+
+        messageOkButton.addEventListener('click', () => {
+            messageBox.classList.add('hidden');
+            messageBox.classList.remove('flex');
+        });
+
+        // Theme Switcher Logic
+        const themes = {
+            light: 'light-theme',
+            creme: 'creme-theme',
+            dark: 'dark-theme'
+        };
+
+        function setTheme(theme) {
+            document.body.className = `flex items-center justify-center min-h-screen p-4 ${themes[theme]}`;
+            localStorage.setItem('selectedTheme', theme);
+        }
+
+        themeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                setTheme(btn.dataset.theme);
+            });
+        });
+
+        const savedTheme = localStorage.getItem('selectedTheme') || 'light';
+        setTheme(savedTheme);
+
+        // Firebase Auth Logic
+        registerBtn.addEventListener('click', async () => {
+            const email = authEmailInput.value;
+            const password = authPasswordInput.value;
+            if (email && password) {
+                try {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    showMessage("Success", "Account created successfully! You are now logged in.");
+                } catch (error) {
+                    console.error("Registration error:", error);
+                    showMessage("Error", error.message);
+                }
+            }
+        });
+
+        loginBtn.addEventListener('click', async () => {
+            const email = authEmailInput.value;
+            const password = authPasswordInput.value;
+            if (email && password) {
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showMessage("Success", "Signed in successfully!");
+                } catch (error) {
+                    console.error("Login error:", error);
+                    showMessage("Error", error.message);
+                }
+            }
+        });
+
+        googleLoginBtn.addEventListener('click', async () => {
+            try {
+                await signInWithPopup(auth, googleProvider);
+                showMessage("Success", "Signed in with Google successfully!");
+            } catch (error) {
+                console.error("Google login error:", error);
+                showMessage("Error", error.message);
+            }
+        });
+
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                showMessage("Signed Out", "You have been signed out.");
+            } catch (error) {
+                console.error("Logout error:", error);
+                showMessage("Error", error.message);
+            }
+        });
+
+        // Initialize Firebase Authentication
+        onAuthStateChanged(auth, async (user) => {
+            if (isPublicView) {
+                userId = publicUserId;
+                userIdEl.textContent = userId;
+                setPublicMode(true);
+                listenForBudgets(userId, true);
+                listenForTransactions(userId, true);
+            } else if (user) {
+                userId = user.uid;
+                userIdEl.textContent = userId;
+                userDisplay.textContent = `Welcome, ${user.email || 'Anonymous User'}!`;
+                authButtons.classList.add('hidden');
+                userInfo.classList.remove('hidden');
+                privateSection.classList.remove('hidden');
+                listenForBudgets(userId, false);
+                listenForTransactions(userId, false);
+                listenForRecurringTransactions(userId);
+                renderBudgetInputs();
+            } else {
+                userId = null;
+                userIdEl.textContent = 'Not signed in';
+                authButtons.classList.remove('hidden');
+                userInfo.classList.add('hidden');
+                privateSection.classList.add('hidden');
+            }
+        });
+        
+        // Set UI to public view-only mode
+        function setPublicMode(isPublic) {
+            if (isPublic) {
+                privateSection.classList.add('hidden');
+                publicShareSection.classList.add('hidden');
+                shareViewMessage.classList.remove('hidden');
+                authSection.classList.add('hidden');
+                searchInput.setAttribute('disabled', 'disabled');
+                sortSelect.setAttribute('disabled', 'disabled');
+                filterSelect.setAttribute('disabled', 'disabled');
+            }
+        }
+
+        // Toggle category field visibility
+        transactionTypeInput.addEventListener('change', (e) => {
+            if (e.target.value === 'expense') {
+                categoryContainer.classList.remove('hidden');
+                transactionCategoryInput.setAttribute('required', 'required');
+            } else {
+                categoryContainer.classList.add('hidden');
+                transactionCategoryInput.removeAttribute('required');
+            }
+        });
+
+        // Toggle recurring category field visibility
+        recurringTypeInput.addEventListener('change', (e) => {
+            if (e.target.value === 'expense') {
+                recurringCategoryInput.classList.remove('hidden');
+            } else {
+                recurringCategoryInput.classList.add('hidden');
+            }
+        });
+        
+        // Event listeners for sorting, filtering, and searching
+        sortSelect.addEventListener('change', () => {
+            if (userId) {
+                listenForTransactions(userId, isPublicView);
+            }
+        });
+
+        filterSelect.addEventListener('change', () => {
+            if (userId) {
+                listenForTransactions(userId, isPublicView);
+            }
+        });
+
+        searchInput.addEventListener('input', () => {
+            if (userId) {
+                listenForTransactions(userId, isPublicView);
+            }
+        });
+
+        // Function to reset the form and exit edit mode
+        function resetForm() {
+            transactionForm.reset();
+            submitBtn.textContent = 'Add Transaction';
+            cancelEditBtn.classList.add('hidden');
+            isEditMode = false;
+            docToEditId = null;
+            categoryContainer.classList.add('hidden');
+            transactionCategoryInput.removeAttribute('required');
+        }
+
+        cancelEditBtn.addEventListener('click', () => {
+            resetForm();
+        });
+
+        // Add or Update a new transaction
+        transactionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = transactionNameInput.value;
+            const amount = parseFloat(transactionAmountInput.value);
+            const type = transactionTypeInput.value;
+            const category = type === 'expense' ? transactionCategoryInput.value : '';
+
+            if (name && amount && !isNaN(amount)) {
+                if (isEditMode && docToEditId) {
+                    try {
+                        const docRef = doc(db, `artifacts/${appId}/users/${userId}/transactions`, docToEditId);
+                        await updateDoc(docRef, {
+                            name,
+                            amount,
+                            type,
+                            category
+                        });
+                        console.log("Document successfully updated!");
+                        resetForm();
+                    } catch (e) {
+                        console.error("Error updating document: ", e);
+                        showMessage("Error", "Failed to update transaction. Please check your network and try again.");
+                    }
+                } else {
+                    try {
+                        const docRef = await addDoc(collection(db, `artifacts/${appId}/users/${userId}/transactions`), {
+                            name,
+                            amount,
+                            type,
+                            category,
+                            timestamp: new Date()
+                        });
+                        console.log("Document written with ID: ", docRef.id);
+                        transactionForm.reset();
+                    } catch (e) {
+                        console.error("Error adding document: ", e);
+                        showMessage("Error", "Failed to add transaction. Please check your network and try again.");
+                    }
+                }
+            } else {
+                showMessage("Invalid Input", "Please enter a valid name and amount for the transaction.");
+            }
+        });
+
+        // Add a recurring transaction
+        recurringForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = recurringNameInput.value;
+            const amount = parseFloat(recurringAmountInput.value);
+            const type = recurringTypeInput.value;
+            const category = type === 'expense' ? recurringCategoryInput.value : '';
+
+            if (name && amount && !isNaN(amount)) {
+                try {
+                    await addDoc(collection(db, `artifacts/${appId}/users/${userId}/recurring_transactions`), {
+                        name,
+                        amount,
+                        type,
+                        category,
+                        frequency: 'monthly',
+                        lastAdded: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+                    });
+                    showMessage("Success", "Recurring transaction added successfully.");
+                    recurringForm.reset();
+                } catch (e) {
+                    console.error("Error adding recurring transaction:", e);
+                    showMessage("Error", "Failed to add recurring transaction.");
+                }
+            }
+        });
+
+        // Listen for recurring transactions and add them if due
+        function listenForRecurringTransactions(currentUserId) {
+            const path = `artifacts/${appId}/users/${currentUserId}/recurring_transactions`;
+            onSnapshot(collection(db, path), (snapshot) => {
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+
+                snapshot.forEach(async (docSnap) => {
+                    const data = docSnap.data();
+                    const lastAdded = data.lastAdded.toDate();
+                    const lastAddedMonth = lastAdded.getMonth();
+                    const lastAddedYear = lastAdded.getFullYear();
+
+                    if (lastAddedYear < currentYear || (lastAddedYear === currentYear && lastAddedMonth < currentMonth)) {
+                        try {
+                            // Add a new transaction
+                            await addDoc(collection(db, `artifacts/${appId}/users/${currentUserId}/transactions`), {
+                                name: data.name,
+                                amount: data.amount,
+                                type: data.type,
+                                category: data.category,
+                                timestamp: now
+                            });
+                            // Update the recurring transaction's lastAdded date
+                            await updateDoc(doc(db, path, docSnap.id), {
+                                lastAdded: now
+                            });
+                            console.log(`Added recurring transaction: ${data.name}`);
+                        } catch (e) {
+                            console.error("Error adding recurring transaction from listener:", e);
+                        }
+                    }
+                });
+                renderRecurringTransactions(snapshot);
+            });
+        }
+
+        function renderRecurringTransactions(snapshot) {
+            recurringList.innerHTML = '';
+            if (snapshot.empty) {
+                recurringList.innerHTML = '<p class="text-center">No recurring transactions yet.</p>';
+                return;
+            }
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-2 rounded-lg border';
+                const color = data.type === 'income' ? 'text-green-500' : 'text-red-500';
+                item.innerHTML = `
+                    <p>${data.name} <span class="font-semibold ${color}">$${data.amount.toFixed(2)}</span></p>
+                    <button data-id="${docSnap.id}" class="delete-recurring-btn bg-red-500 text-white text-sm font-semibold py-1 px-2 rounded-lg hover:bg-red-600 transition-colors duration-200">Delete</button>
+                `;
+                recurringList.appendChild(item);
+            });
+        }
+
+        recurringList.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('delete-recurring-btn')) {
+                const docId = e.target.dataset.id;
+                try {
+                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/recurring_transactions`, docId));
+                    showMessage("Success", "Recurring transaction deleted.");
+                } catch (error) {
+                    console.error("Error deleting recurring transaction:", error);
+                    showMessage("Error", "Failed to delete recurring transaction.");
+                }
+            }
+        });
+
+        // Listen for real-time transaction updates
+        function listenForTransactions(currentUserId, isPublic) {
+            const path = isPublic ? `artifacts/${appId}/public/data/${currentUserId}/transactions` : `artifacts/${appId}/users/${currentUserId}/transactions`;
+            const transactionsRef = collection(db, path);
+            const q = query(transactionsRef);
+
+            onSnapshot(q, (snapshot) => {
+                let allTransactions = [];
+                let expenseCategories = {};
+                let totalIncome = 0;
+                let totalExpense = 0;
+                
+                let monthlyExpensesData = {};
+                let balanceData = {};
+                let runningBalance = 0;
+
+                snapshot.forEach(doc => {
+                    const transaction = { id: doc.id, ...doc.data() };
+                    allTransactions.push(transaction);
+
+                    const date = transaction.timestamp.toDate();
+                    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    
+                    if (transaction.type === 'income') {
+                        totalIncome += transaction.amount;
+                    } else {
+                        totalExpense += transaction.amount;
+                        const category = transaction.category || 'Other';
+                        if (!expenseCategories[category]) {
+                            expenseCategories[category] = 0;
+                        }
+                        expenseCategories[category] += transaction.amount;
+
+                        // Data for monthly expenses chart
+                        if (!monthlyExpensesData[monthYear]) {
+                            monthlyExpensesData[monthYear] = {};
+                        }
+                        const currentCategoryAmount = monthlyExpensesData[monthYear][category] || 0;
+                        monthlyExpensesData[monthYear][category] = currentCategoryAmount + transaction.amount;
+                    }
+                });
+
+                // Sort transactions chronologically to build balance over time chart
+                allTransactions.sort((a, b) => a.timestamp.toDate() - b.timestamp.toDate());
+                allTransactions.forEach(t => {
+                    const date = t.timestamp.toDate().toLocaleDateString('en-US');
+                    runningBalance += (t.type === 'income' ? t.amount : -t.amount);
+                    balanceData[date] = runningBalance;
+                });
+
+                // Get current search term, sort, and filter preferences
+                const searchTerm = searchInput.value.toLowerCase();
+                const sortPreference = sortSelect.value;
+                const filterPreference = filterSelect.value;
+
+                // First, apply the search filter
+                let searchedTransactions = allTransactions;
+                if (searchTerm) {
+                    searchedTransactions = allTransactions.filter(t => 
+                        t.name.toLowerCase().includes(searchTerm)
+                    );
+                }
+
+                // Then, apply the type/category filter to the search results
+                let filteredAndSortedTransactions = searchedTransactions;
+                if (filterPreference === 'income') {
+                    filteredAndSortedTransactions = searchedTransactions.filter(t => t.type === 'income');
+                } else if (filterPreference === 'expense') {
+                    filteredAndSortedTransactions = searchedTransactions.filter(t => t.type === 'expense');
+                } else if (filterPreference !== 'all') {
+                    filteredAndSortedTransactions = searchedTransactions.filter(t => t.category === filterPreference);
+                }
+                
+                // Finally, sort the filtered transactions
+                if (sortPreference === 'oldest') {
+                    filteredAndSortedTransactions.sort((a, b) => a.timestamp.toDate() - b.timestamp.toDate());
+                } else if (sortPreference === 'highest_amount') {
+                    filteredAndSortedTransactions.sort((a, b) => b.amount - a.amount);
+                } else if (sortPreference === 'lowest_amount') {
+                    filteredAndSortedTransactions.sort((a, b) => a.amount - b.amount);
+                } else {
+                    // Default to 'newest'
+                    filteredAndSortedTransactions.sort((a, b) => b.timestamp.toDate() - a.timestamp.toDate());
+                }
+
+                // Clear previous list and render new items
+                transactionList.innerHTML = '';
+                if (filteredAndSortedTransactions.length === 0) {
+                    transactionList.innerHTML = '<p class="text-center">No transactions match your criteria.</p>';
+                } else {
+                    filteredAndSortedTransactions.forEach(transaction => {
+                        const li = document.createElement('li');
+                        li.className = 'flex items-center justify-between p-3 rounded-lg shadow-sm border';
+                        
+                        const transactionText = transaction.type === 'expense' ? `${transaction.name} (${transaction.category})` : transaction.name;
+                        
+                        let amountColor = transaction.type === 'income' ? 'text-green-600' : 'text-red-600';
+                        
+                        li.innerHTML = `
+                            <span class="flex-1">${transactionText}</span>
+                            <span class="font-semibold ${amountColor} min-w-[80px] text-right">$${transaction.amount.toFixed(2)}</span>
+                            ${!isPublicView ? `
+                                <div class="flex space-x-2 ml-4">
+                                    <button data-id="${transaction.id}" class="edit-btn bg-yellow-500 text-white text-sm font-semibold py-1 px-3 rounded-lg hover:bg-yellow-600 transition-colors duration-200">
+                                        Edit
+                                    </button>
+                                    <button data-id="${transaction.id}" class="delete-btn bg-red-500 text-white text-sm font-semibold py-1 px-3 rounded-lg hover:bg-red-600 transition-colors duration-200">
+                                        Delete
+                                    </button>
+                                </div>
+                            ` : ''}
+                        `;
+                        li.style.backgroundColor = 'var(--bg-tertiary)';
+                        li.style.borderColor = 'var(--border-color)';
+                        transactionList.appendChild(li);
+                    });
+                }
+                
+                updatePieChart(expenseCategories);
+                updateTotalBalance(totalIncome, totalExpense);
+                renderBudgetStatus(expenseCategories);
+                renderCharts(monthlyExpensesData, balanceData);
+            }, (error) => {
+                console.error("Error listening to documents: ", error);
+                showMessage("Database Error", "Failed to load transactions. Please check your connection.");
+            });
+        }
+
+        // Function to handle transaction deletion
+        transactionList.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('delete-btn')) {
+                const docId = e.target.dataset.id;
+                try {
+                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/transactions`, docId));
+                    console.log("Document successfully deleted!");
+                } catch (error) {
+                    console.error("Error removing document: ", error);
+                    showMessage("Error", "Failed to delete transaction. Please try again.");
+                }
+            } else if (e.target.classList.contains('edit-btn')) {
+                const docId = e.target.dataset.id;
+                const transactionDoc = await getDoc(doc(db, `artifacts/${appId}/users/${userId}/transactions`, docId));
+                if (transactionDoc.exists()) {
+                    const data = transactionDoc.data();
+                    transactionNameInput.value = data.name;
+                    transactionAmountInput.value = data.amount;
+                    transactionTypeInput.value = data.type;
+                    
+                    if (data.type === 'expense') {
+                        categoryContainer.classList.remove('hidden');
+                        transactionCategoryInput.value = data.category || 'Other';
+                    } else {
+                        categoryContainer.classList.add('hidden');
+                    }
+                    
+                    // Switch to edit mode
+                    isEditMode = true;
+                    docToEditId = docId;
+                    submitBtn.textContent = 'Update Transaction';
+                    cancelEditBtn.classList.remove('hidden');
+                    
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    showMessage("Error", "Transaction not found.");
+                }
+            }
+        });
+
+        // Update the total balance display
+        function updateTotalBalance(income, expense) {
+            const balance = income - expense;
+            totalBalanceEl.textContent = `$${balance.toFixed(2)}`;
+            totalBalanceEl.classList.remove('text-green-600', 'text-red-600', 'text-gray-800');
+            if (balance > 0) {
+                totalBalanceEl.classList.add('text-green-600');
+            } else if (balance < 0) {
+                totalBalanceEl.classList.add('text-red-600');
+            } else {
+                totalBalanceEl.classList.add('text-gray-800');
+            }
+        }
+        
+        // Update the pie chart
+        function updatePieChart(expenseCategories) {
+            const totalExpenses = Object.values(expenseCategories).reduce((sum, amount) => sum + amount, 0);
+
+            pieChartContainer.innerHTML = ''; // Clear previous chart
+
+            if (totalExpenses === 0) {
+                pieChartContainer.innerHTML = `<p class="text-center">No expenses to display.</p>`;
+                return;
+            }
+
+            const pieSize = 200;
+            const radius = pieSize / 2;
+            let currentAngle = 0;
+            let paths = [];
+            let legend = [];
+
+            Object.keys(expenseCategories).forEach(category => {
+                const amount = expenseCategories[category];
+                const percentage = (amount / totalExpenses);
+                const angle = percentage * 360;
+
+                const endAngle = currentAngle + angle;
+                const startX = radius + radius * Math.sin(currentAngle * Math.PI / 180);
+                const startY = radius - radius * Math.cos(currentAngle * Math.PI / 180);
+                const endX = radius + radius * Math.sin(endAngle * Math.PI / 180);
+                const endY = radius - radius * Math.cos(endAngle * Math.PI / 180);
+
+                const largeArcFlag = angle > 180 ? 1 : 0;
+                const pathData = `M${radius},${radius} L${startX},${startY} A${radius},${radius} 0 ${largeArcFlag} 1 ${endX},${endY} Z`;
+                
+                paths.push(`<path d="${pathData}" fill="${categoryColors[category] || '#e2e8f0'}"></path>`);
+
+                legend.push(`
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 rounded-full" style="background-color: ${categoryColors[category] || '#e2e8f0'};"></span>
+                        <span class="text-secondary">${category} ($${amount.toFixed(2)})</span>
+                    </div>
+                `);
+
+                currentAngle = endAngle;
+            });
+
+            const svgContent = `
+                <svg width="${pieSize}" height="${pieSize}" viewBox="0 0 ${pieSize} ${pieSize}">
+                    <g transform="rotate(-90 ${radius} ${radius})">
+                        ${paths.join('')}
+                    </g>
+                </svg>
+            `;
+            
+            const legendHtml = `<div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">${legend.join('')}</div>`;
+
+            pieChartContainer.innerHTML = svgContent + legendHtml;
+        }
+
+        // Function to render the new charts
+        function renderCharts(monthlyExpensesData, balanceData) {
+            const expenseChartCtx = document.getElementById('expensesChart').getContext('2d');
+            const balanceChartCtx = document.getElementById('balanceChart').getContext('2d');
+
+            if (expensesChart) expensesChart.destroy();
+            if (balanceChart) balanceChart.destroy();
+            
+            const months = Object.keys(monthlyExpensesData).sort();
+            const datasets = [];
+
+            Object.keys(categoryColors).filter(c => c !== 'Income').forEach(category => {
+                datasets.push({
+                    label: category,
+                    data: months.map(month => monthlyExpensesData[month][category] || 0),
+                    backgroundColor: categoryColors[category],
+                    borderColor: 'rgba(0,0,0,0.1)',
+                    borderWidth: 1
+                });
+            });
+
+            expensesChart = new Chart(expenseChartCtx, {
+                type: 'bar',
+                data: {
+                    labels: months.map(m => new Date(m).toLocaleString('default', { month: 'short', year: 'numeric' })),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true }
+                    }
+                }
+            });
+
+            balanceChart = new Chart(balanceChartCtx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(balanceData),
+                    datasets: [{
+                        label: 'Total Balance',
+                        data: Object.values(balanceData),
+                        borderColor: '#4299e1',
+                        backgroundColor: 'rgba(66, 153, 225, 0.2)',
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: false }
+                    }
+                }
+            });
+        }
+
+        // Function to render budget input fields
+        function renderBudgetInputs() {
+            budgetInputsContainer.innerHTML = '';
+            categories.forEach(category => {
+                const inputGroup = document.createElement('div');
+                inputGroup.className = 'flex items-center space-x-2';
+                inputGroup.innerHTML = `
+                    <label for="budget-${category}" class="w-1/3 font-medium">${category}</label>
+                    <input type="number" id="budget-${category}" placeholder="Budget ($)" value="${currentBudgets[category] || ''}"
+                           class="w-2/3 p-2 rounded-lg border focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors duration-200">
+                `;
+                budgetInputsContainer.appendChild(inputGroup);
+            });
+        }
+
+        // Save budgets to Firestore
+        budgetForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newBudgets = {};
+            categories.forEach(category => {
+                const input = document.getElementById(`budget-${category}`);
+                const amount = parseFloat(input.value);
+                if (!isNaN(amount) && amount > 0) {
+                    newBudgets[category] = amount;
+                }
+            });
+
+            try {
+                const budgetRef = doc(db, `artifacts/${appId}/users/${userId}/budgets`, 'monthly_budgets');
+                await setDoc(budgetRef, newBudgets);
+                console.log("Budgets successfully saved!");
+                showMessage("Success", "Your budgets have been saved successfully!");
+            } catch (error) {
+                console.error("Error saving budgets: ", error);
+                showMessage("Error", "Failed to save budgets. Please try again.");
+            }
+        });
+
+        // Listen for real-time budget updates
+        function listenForBudgets(currentUserId, isPublic) {
+            const path = isPublic ? `artifacts/${appId}/public/data/${currentUserId}/budgets` : `artifacts/${appId}/users/${currentUserId}/budgets`;
+            const budgetRef = doc(db, path, 'monthly_budgets');
+            onSnapshot(budgetRef, (doc) => {
+                if (doc.exists()) {
+                    currentBudgets = doc.data();
+                    if (!isPublic) renderBudgetInputs();
+                    if (userId) {
+                        listenForTransactions(userId, isPublic);
+                    }
+                } else {
+                    currentBudgets = {};
+                    if (!isPublic) renderBudgetInputs();
+                }
+            }, (error) => {
+                console.error("Error listening to budgets: ", error);
+            });
+        }
+        
+        // Render the budget status display
+        function renderBudgetStatus(expenseCategories) {
+            budgetStatusContainer.innerHTML = '';
+
+            const categoriesWithBudgets = Object.keys(currentBudgets);
+            if (categoriesWithBudgets.length === 0) {
+                budgetStatusContainer.innerHTML = `<p class="text-center">Set your budgets above to see your progress here.</p>`;
+                return;
+            }
+
+            categoriesWithBudgets.forEach(category => {
+                const budgetedAmount = currentBudgets[category] || 0;
+                const spentAmount = expenseCategories[category] || 0;
+                const remainingAmount = budgetedAmount - spentAmount;
+
+                const percentage = budgetedAmount > 0 ? Math.min((spentAmount / budgetedAmount) * 100, 100) : 0;
+                const progressBarColor = percentage >= 100 ? 'bg-red-500' : 'bg-green-500';
+                const remainingColor = remainingAmount < 0 ? 'text-red-500' : 'text-green-500';
+
+                const statusItem = document.createElement('div');
+                statusItem.className = 'bg-white rounded-lg p-4 shadow-sm border';
+                statusItem.style.backgroundColor = 'var(--bg-tertiary)';
+                statusItem.style.borderColor = 'var(--border-color)';
+                statusItem.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-semibold">${category}</span>
+                        <span class="text-sm">$${spentAmount.toFixed(2)} / $${budgetedAmount.toFixed(2)}</span>
+                    </div>
+                    <div class="w-full rounded-full h-2.5" style="background-color: var(--border-color);">
+                        <div class="progress-bar ${progressBarColor}" style="width: ${percentage}%;"></div>
+                    </div>
+                    <p class="text-sm mt-2 text-right">
+                        Remaining: <span class="font-semibold ${remainingColor}">$${remainingAmount.toFixed(2)}</span>
+                    </p>
+                `;
+                budgetStatusContainer.appendChild(statusItem);
+            });
+        }
+
+        // --- Public Sharing Logic ---
+
+        publishBtn.addEventListener('click', async () => {
+            if (!userId) {
+                showMessage("Authentication Required", "Please sign in to publish your data.");
+                return;
+            }
+            try {
+                const privateTransactionsSnapshot = await getDocs(collection(db, `artifacts/${appId}/users/${userId}/transactions`));
+                const privateBudgetsDoc = await getDoc(doc(db, `artifacts/${appId}/users/${userId}/budgets`, 'monthly_budgets'));
+                
+                const publicTransactionsSnapshot = await getDocs(collection(db, `artifacts/${appId}/public/data/${userId}/transactions`));
+                
+                const deletePromises = publicTransactionsSnapshot.docs.map(d => deleteDoc(d.ref));
+                await Promise.all(deletePromises);
+                
+                const publicBudgetsDoc = await getDoc(doc(db, `artifacts/${appId}/public/data/${userId}/budgets`, 'monthly_budgets'));
+                if (publicBudgetsDoc.exists()) {
+                    await deleteDoc(publicBudgetsDoc.ref);
+                }
+
+                const copyPromises = [];
+                privateTransactionsSnapshot.forEach(doc => {
+                    const newPublicDocRef = doc(db, `artifacts/${appId}/public/data/${userId}/transactions`, doc.id);
+                    copyPromises.push(setDoc(newPublicDocRef, doc.data()));
+                });
+                
+                if (privateBudgetsDoc.exists()) {
+                    const newPublicBudgetsRef = doc(db, `artifacts/${appId}/public/data/${userId}/budgets`, 'monthly_budgets');
+                    copyPromises.push(setDoc(newPublicBudgetsRef, privateBudgetsDoc.data()));
+                }
+                
+                await Promise.all(copyPromises);
+
+                const shareableLink = `${window.location.origin}${window.location.pathname}?userId=${userId}`;
+                shareLinkInput.value = shareableLink;
+                linkContainer.classList.remove('hidden');
+
+                shareLinkInput.select();
+                document.execCommand('copy');
+                showMessage("Success", "Public data has been updated and the shareable link has been copied to your clipboard!");
+            } catch (error) {
+                console.error("Error publishing data:", error);
+                showMessage("Error", "Failed to publish data. Please try again.");
+            }
+        });
+
+        copyLinkBtn.addEventListener('click', () => {
+            shareLinkInput.select();
+            document.execCommand('copy');
+            showMessage("Success", "The shareable link has been copied to your clipboard!");
+        });
+
+    </script>
+</body>
+</html>
