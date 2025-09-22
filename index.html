@@ -127,8 +127,12 @@
                 <h2 class="text-xl sm:text-2xl font-semibold mb-4">Add New Transaction</h2>
                 <form id="transaction-form" class="space-y-4">
                     <div>
-                        <input type="text" id="transaction-name" placeholder="Transaction Name" required
-                            class="w-full p-3 rounded-lg border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200">
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="transaction-name" placeholder="Transaction Name" required
+                                class="w-full p-3 rounded-lg border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200">
+                            <button type="button" id="ai-suggestion-btn" class="bg-blue-600 text-white font-bold p-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 whitespace-nowrap">AI Suggestion</button>
+                        </div>
+                        <div id="ai-loading-indicator" class="hidden text-sm text-gray-500 mt-2">Generating AI suggestions...</div>
                     </div>
                     <div>
                         <input type="number" id="transaction-amount" placeholder="Amount" required
@@ -163,6 +167,57 @@
                         </button>
                     </div>
                 </form>
+                
+                <hr class="my-6 border-t border-dashed">
+                
+                <div id="split-transaction-section" class="mb-4">
+                    <h3 class="text-lg font-semibold mb-2">Split a Transaction</h3>
+                    <p class="text-sm text-secondary mb-2">Split a single transaction into multiple categories. Total amount must equal the sum of split amounts.</p>
+                    <div class="flex items-center space-x-2 mb-2">
+                        <input type="number" id="split-amount-input" placeholder="Total Amount to Split" class="w-full p-3 rounded-lg border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200">
+                        <button id="add-split-btn" class="bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition-colors duration-200 whitespace-nowrap">Add Split</button>
+                    </div>
+                    <div id="split-container" class="space-y-2 mb-4"></div>
+                    <button id="save-split-btn" class="w-full bg-green-600 text-white font-bold p-3 rounded-lg hover:bg-green-700 transition-colors duration-200 hidden">Save Splits</button>
+                    <p id="split-total-message" class="text-sm mt-2 hidden text-red-500 font-semibold"></p>
+                </div>
+                
+                <hr class="my-6 border-t border-dashed">
+
+                <h3 class="text-lg font-semibold mb-2">Bulk AI Transaction Entry</h3>
+                <p class="text-sm mb-4">Paste transaction details from SMS or emails. The AI will parse and add them for you.</p>
+                <textarea id="bulk-transaction-input" rows="4" placeholder="Paste your transactions here..." class="w-full p-3 rounded-lg border focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200 mb-4"></textarea>
+                <button id="bulk-add-btn" class="w-full bg-green-600 text-white font-bold p-3 rounded-lg hover:bg-green-700 transition-colors duration-200">
+                    Parse & Add All Transactions
+                </button>
+                <div id="bulk-loading-indicator" class="hidden text-sm text-gray-500 mt-2">Parsing and adding transactions...</div>
+            </div>
+            
+            <!-- Financial Goals Section -->
+            <div class="mb-8 p-4 rounded-lg border">
+                <h2 class="text-xl sm:text-2xl font-semibold mb-4">Financial Goals</h2>
+                <form id="goal-form" class="space-y-4 mb-4">
+                    <input type="text" id="goal-name" placeholder="Goal Name (e.g., Vacation fund)" required class="w-full p-3 rounded-lg border focus:border-blue-500">
+                    <input type="number" id="goal-target" placeholder="Target Amount ($)" required class="w-full p-3 rounded-lg border focus:border-blue-500">
+                    <button type="submit" class="w-full bg-purple-600 text-white font-bold p-3 rounded-lg hover:bg-purple-700 transition-colors duration-200">Add Goal</button>
+                </form>
+                <div id="goals-list" class="space-y-4">
+                    <!-- Goals will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Upcoming Bills Section -->
+            <div class="mb-8 p-4 rounded-lg border">
+                <h2 class="text-xl sm:text-2xl font-semibold mb-4">Upcoming Bills & Subscriptions</h2>
+                <form id="bills-form" class="space-y-4 mb-4">
+                    <input type="text" id="bill-name" placeholder="Bill Name (e.g., Internet bill)" required class="w-full p-3 rounded-lg border focus:border-blue-500">
+                    <input type="number" id="bill-amount" placeholder="Amount ($)" required class="w-full p-3 rounded-lg border focus:border-blue-500">
+                    <input type="date" id="bill-due-date" required class="w-full p-3 rounded-lg border focus:border-blue-500">
+                    <button type="submit" class="w-full bg-orange-600 text-white font-bold p-3 rounded-lg hover:bg-orange-700 transition-colors duration-200">Add Bill</button>
+                </form>
+                <div id="bills-list" class="space-y-4">
+                    <!-- Bills will be rendered here -->
+                </div>
             </div>
             
             <!-- Recurring Transactions Section -->
@@ -215,6 +270,25 @@
                 <h3 class="text-lg font-semibold mb-2">Monthly Expenses by Category</h3>
                 <canvas id="expensesChart"></canvas>
             </div>
+            <div class="p-4 rounded-lg border mt-8">
+                <h3 class="text-lg font-semibold mb-2">Spending Trends by Category</h3>
+                <canvas id="spendingTrendsChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- AI Financial Advisor Section -->
+        <div class="mb-8 p-4 rounded-lg border">
+            <h2 class="text-xl sm:text-2xl font-semibold mb-4">Financial Advisor</h2>
+            <p class="text-sm mb-4">Get personalized insights on your spending and advice on where to invest or save based on your financial habits.</p>
+            <div id="advisor-results" class="hidden bg-gray-50 rounded-lg p-4 mb-4 text-sm" style="background-color: var(--bg-tertiary);">
+                <p class="font-bold mb-2">AI-Powered Advice:</p>
+                <div id="advisor-text"></div>
+            </div>
+            <button id="get-advice-btn" class="w-full bg-orange-600 text-white font-bold p-3 rounded-lg hover:bg-orange-700 transition-colors duration-200">
+                Get Financial Advice
+            </button>
+            <div id="advisor-loading-indicator" class="hidden text-sm text-gray-500 mt-2">Analyzing your finances...</div>
+            <p class="text-xs text-gray-400 mt-2 italic">Disclaimer: This advice is for informational purposes only and not a substitute for professional financial advice.</p>
         </div>
 
         <!-- Budget Status Display -->
@@ -271,7 +345,7 @@
         </div>
 
         <!-- Public Sharing Section -->
-        <div id="public-share-section" class="mt-8 p-4 rounded-lg border">
+        <div class="mt-8 p-4 rounded-lg border">
             <h2 class="text-xl sm:text-2xl font-semibold mb-4">Public Sharing</h2>
             <p class="text-sm mb-4">Publish your current data to create a view-only shareable link. The link will reflect the data at the time of publishing.</p>
             <button id="publish-btn" class="w-full bg-teal-600 text-white font-bold p-3 rounded-lg hover:bg-teal-700 transition-colors duration-200">
@@ -365,13 +439,38 @@
         const recurringTypeInput = document.getElementById('recurring-type');
         const recurringCategoryInput = document.getElementById('recurring-category');
         const recurringList = document.getElementById('recurring-list');
+        const aiSuggestionBtn = document.getElementById('ai-suggestion-btn');
+        const aiLoadingIndicator = document.getElementById('ai-loading-indicator');
+        const bulkTransactionInput = document.getElementById('bulk-transaction-input');
+        const bulkAddBtn = document.getElementById('bulk-add-btn');
+        const bulkLoadingIndicator = document.getElementById('bulk-loading-indicator');
+        const getAdviceBtn = document.getElementById('get-advice-btn');
+        const advisorResults = document.getElementById('advisor-results');
+        const advisorText = document.getElementById('advisor-text');
+        const advisorLoadingIndicator = document.getElementById('advisor-loading-indicator');
+        const goalForm = document.getElementById('goal-form');
+        const goalNameInput = document.getElementById('goal-name');
+        const goalTargetInput = document.getElementById('goal-target');
+        const goalsList = document.getElementById('goals-list');
+        const billsForm = document.getElementById('bills-form');
+        const billNameInput = document.getElementById('bill-name');
+        const billAmountInput = document.getElementById('bill-amount');
+        const billDateInput = document.getElementById('bill-due-date');
+        const billsList = document.getElementById('bills-list');
+        const splitAmountInput = document.getElementById('split-amount-input');
+        const addSplitBtn = document.getElementById('add-split-btn');
+        const splitContainer = document.getElementById('split-container');
+        const saveSplitBtn = document.getElementById('save-split-btn');
+        const splitTotalMessage = document.getElementById('split-total-message');
 
         let userId = '';
         let isEditMode = false;
         let docToEditId = null;
         let currentBudgets = {};
+        let currentTransactions = [];
+        let splitTransactions = [];
         
-        let expensesChart, balanceChart;
+        let expensesChart, balanceChart, spendingTrendsChart;
 
         const urlParams = new URLSearchParams(window.location.search);
         const publicUserId = urlParams.get('userId');
@@ -437,7 +536,11 @@
                     showMessage("Success", "Account created successfully! You are now logged in.");
                 } catch (error) {
                     console.error("Registration error:", error);
-                    showMessage("Error", error.message);
+                    if (error.code === 'auth/operation-not-allowed') {
+                        showMessage("Error", "Email/Password sign-in is not enabled in your Firebase project. Please enable it in the Firebase console settings or use Google Sign-in.");
+                    } else {
+                        showMessage("Error", error.message);
+                    }
                 }
             }
         });
@@ -494,6 +597,8 @@
                 listenForBudgets(userId, false);
                 listenForTransactions(userId, false);
                 listenForRecurringTransactions(userId);
+                listenForGoals(userId);
+                listenForBills(userId);
                 renderBudgetInputs();
             } else {
                 userId = null;
@@ -615,6 +720,247 @@
                 showMessage("Invalid Input", "Please enter a valid name and amount for the transaction.");
             }
         });
+        
+        // AI suggestion logic
+        aiSuggestionBtn.addEventListener('click', async () => {
+            const transactionName = transactionNameInput.value.trim();
+            if (!transactionName) {
+                showMessage("Input Required", "Please enter a transaction name to get an AI suggestion.");
+                return;
+            }
+
+            aiLoadingIndicator.classList.remove('hidden');
+
+            try {
+                const payload = {
+                    contents: [{
+                        parts: [{
+                            text: `Analyze the following transaction name and suggest a better, more descriptive name and a category. Only choose from these categories: "Groceries", "Rent", "Entertainment", "Utilities", "Transportation", "Other". Do not add any other text to your response. Provide the response as a JSON object.`
+                        },
+                        {
+                            text: `Transaction name: "${transactionName}"`
+                        }]
+                    }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                "suggestedName": { "type": "STRING" },
+                                "suggestedCategory": { "type": "STRING" }
+                            },
+                            "propertyOrdering": ["suggestedName", "suggestedCategory"]
+                        }
+                    }
+                };
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const json = result.candidates[0].content.parts[0].text;
+                    const parsedJson = JSON.parse(json);
+                    
+                    transactionNameInput.value = parsedJson.suggestedName;
+                    const categoryOption = [...transactionCategoryInput.options].find(opt => opt.value === parsedJson.suggestedCategory);
+                    if (categoryOption) {
+                        transactionCategoryInput.value = parsedJson.suggestedCategory;
+                        categoryContainer.classList.remove('hidden');
+                        transactionCategoryInput.setAttribute('required', 'required');
+                        transactionTypeInput.value = 'expense';
+                    } else {
+                        // Default to expense and other if category is invalid
+                        transactionTypeInput.value = 'expense';
+                        transactionCategoryInput.value = 'Other';
+                        categoryContainer.classList.remove('hidden');
+                        transactionCategoryInput.setAttribute('required', 'required');
+                    }
+                    showMessage("AI Suggestion", `Suggested Name: ${parsedJson.suggestedName}\nSuggested Category: ${parsedJson.suggestedCategory}`);
+                } else {
+                    showMessage("AI Error", "Could not get a suggestion. Please try again.");
+                }
+            } catch (error) {
+                console.error("AI API Error:", error);
+                showMessage("API Error", "Failed to connect to AI service. Please check your network and try again.");
+            } finally {
+                aiLoadingIndicator.classList.add('hidden');
+            }
+        });
+        
+        // Transaction splitting logic
+        addSplitBtn.addEventListener('click', () => {
+            const splitInputGroup = document.createElement('div');
+            splitInputGroup.className = 'flex items-center space-x-2';
+            splitInputGroup.innerHTML = `
+                <input type="text" placeholder="Split Name" class="split-name w-1/2 p-2 rounded-lg border">
+                <input type="number" placeholder="Amount" class="split-amount w-1/4 p-2 rounded-lg border">
+                <select class="split-category w-1/4 p-2 rounded-lg border">
+                    ${categories.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+                </select>
+                <button type="button" class="remove-split-btn bg-red-500 text-white p-2 rounded-lg hover:bg-red-600">X</button>
+            `;
+            splitContainer.appendChild(splitInputGroup);
+            saveSplitBtn.classList.remove('hidden');
+            
+            // Add a temporary object to track this split
+            splitTransactions.push({ name: '', amount: 0, category: '' });
+        });
+        
+        splitContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-split-btn')) {
+                const index = Array.from(splitContainer.children).indexOf(e.target.parentNode);
+                splitContainer.removeChild(e.target.parentNode);
+                splitTransactions.splice(index, 1);
+                updateSplitTotal();
+                if (splitTransactions.length === 0) {
+                    saveSplitBtn.classList.add('hidden');
+                }
+            }
+        });
+        
+        splitContainer.addEventListener('input', () => {
+            updateSplitTotal();
+        });
+
+        function updateSplitTotal() {
+            const splitAmount = parseFloat(splitAmountInput.value) || 0;
+            const splitInputs = document.querySelectorAll('.split-amount');
+            const splitTotal = Array.from(splitInputs).reduce((sum, input) => sum + (parseFloat(input.value) || 0), 0);
+            
+            const message = `$${splitTotal.toFixed(2)} of $${splitAmount.toFixed(2)} total`;
+            splitTotalMessage.textContent = message;
+            splitTotalMessage.classList.remove('hidden');
+            
+            if (splitTotal !== splitAmount) {
+                splitTotalMessage.classList.remove('text-green-500');
+                splitTotalMessage.classList.add('text-red-500');
+                saveSplitBtn.disabled = true;
+            } else {
+                splitTotalMessage.classList.remove('text-red-500');
+                splitTotalMessage.classList.add('text-green-500');
+                saveSplitBtn.disabled = false;
+            }
+        }
+        
+        saveSplitBtn.addEventListener('click', async () => {
+            const splitAmount = parseFloat(splitAmountInput.value) || 0;
+            const splitInputs = document.querySelectorAll('.split-amount');
+            const splitNames = document.querySelectorAll('.split-name');
+            const splitCategories = document.querySelectorAll('.split-category');
+            
+            const splitTotal = Array.from(splitInputs).reduce((sum, input) => sum + (parseFloat(input.value) || 0), 0);
+            
+            if (splitTotal !== splitAmount) {
+                showMessage("Validation Error", "The sum of splits must equal the total amount.");
+                return;
+            }
+            
+            try {
+                const addPromises = [];
+                for (let i = 0; i < splitInputs.length; i++) {
+                    addPromises.push(addDoc(collection(db, `artifacts/${appId}/users/${userId}/transactions`), {
+                        name: splitNames[i].value,
+                        amount: parseFloat(splitInputs[i].value),
+                        type: 'expense',
+                        category: splitCategories[i].value,
+                        timestamp: new Date()
+                    }));
+                }
+                await Promise.all(addPromises);
+                showMessage("Success", "Transactions saved successfully!");
+                splitContainer.innerHTML = '';
+                splitAmountInput.value = '';
+                splitTotalMessage.classList.add('hidden');
+                saveSplitBtn.classList.add('hidden');
+            } catch (e) {
+                console.error("Error saving splits:", e);
+                showMessage("Error", "Failed to save split transactions.");
+            }
+        });
+
+        // Bulk AI transaction logic
+        bulkAddBtn.addEventListener('click', async () => {
+            const bulkText = bulkTransactionInput.value.trim();
+            if (!bulkText) {
+                showMessage("Input Required", "Please paste transaction data to get started.");
+                return;
+            }
+            
+            bulkLoadingIndicator.classList.remove('hidden');
+
+            try {
+                const payload = {
+                    contents: [{
+                        parts: [{
+                            text: `Extract transaction details (name, amount, type, and category) from the following text. The type should be either "income" or "expense." The category should be one of: "Groceries", "Rent", "Entertainment", "Utilities", "Transportation", or "Other". If no category is found, default to "Other." Provide the output as a JSON array of objects, with each object representing a single transaction.`
+                        },
+                        {
+                            text: `Transaction data: "${bulkText}"`
+                        }]
+                    }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "ARRAY",
+                            items: {
+                                type: "OBJECT",
+                                properties: {
+                                    "name": { "type": "STRING" },
+                                    "amount": { "type": "NUMBER" },
+                                    "type": { "type": "STRING" },
+                                    "category": { "type": "STRING" }
+                                },
+                                "propertyOrdering": ["name", "amount", "type", "category"]
+                            }
+                        }
+                    }
+                };
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const json = result.candidates[0].content.parts[0].text;
+                    const parsedTransactions = JSON.parse(json);
+                    
+                    for (const t of parsedTransactions) {
+                        await addDoc(collection(db, `artifacts/${appId}/users/${userId}/transactions`), {
+                            name: t.name,
+                            amount: t.amount,
+                            type: t.type,
+                            category: t.category,
+                            timestamp: new Date()
+                        });
+                    }
+                    showMessage("Success", `${parsedTransactions.length} transactions added successfully!`);
+                    bulkTransactionInput.value = '';
+
+                } else {
+                    showMessage("AI Error", "Could not parse transactions. Please try again or enter them manually.");
+                }
+            } catch (error) {
+                console.error("AI API Error:", error);
+                showMessage("API Error", "Failed to connect to AI service. Please check your network and try again.");
+            } finally {
+                bulkLoadingIndicator.classList.add('hidden');
+            }
+        });
 
         // Add a recurring transaction
         recurringForm.addEventListener('submit', async (e) => {
@@ -712,7 +1058,161 @@
                 }
             }
         });
+        
+        // Goals logic
+        goalForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = goalNameInput.value;
+            const target = parseFloat(goalTargetInput.value);
+            if (name && !isNaN(target) && target > 0) {
+                try {
+                    await addDoc(collection(db, `artifacts/${appId}/users/${userId}/goals`), {
+                        name,
+                        target,
+                        timestamp: new Date()
+                    });
+                    showMessage("Success", "Goal added successfully!");
+                    goalForm.reset();
+                } catch (e) {
+                    console.error("Error adding goal:", e);
+                    showMessage("Error", "Failed to add goal.");
+                }
+            }
+        });
 
+        function listenForGoals(currentUserId) {
+            const path = `artifacts/${appId}/users/${currentUserId}/goals`;
+            onSnapshot(collection(db, path), (snapshot) => {
+                goalsList.innerHTML = '';
+                if (snapshot.empty) {
+                    goalsList.innerHTML = '<p class="text-center">No goals set yet.</p>';
+                    return;
+                }
+                
+                snapshot.forEach(docSnap => {
+                    const goal = { id: docSnap.id, ...docSnap.data() };
+                    const totalSavings = currentTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) - currentTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+                    const progress = Math.min((totalSavings / goal.target) * 100, 100);
+                    
+                    const item = document.createElement('div');
+                    item.className = 'p-4 rounded-lg border';
+                    item.style.backgroundColor = 'var(--bg-tertiary)';
+                    item.style.borderColor = 'var(--border-color)';
+                    item.innerHTML = `
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-semibold">${goal.name}</h3>
+                            <span class="text-sm font-semibold">${progress.toFixed(0)}%</span>
+                        </div>
+                        <div class="w-full h-2 rounded-full" style="background-color: var(--border-color);">
+                            <div class="progress-bar bg-blue-500" style="width: ${progress}%;"></div>
+                        </div>
+                        <p class="text-xs mt-2 text-secondary">Saved: $${totalSavings.toFixed(2)} of $${goal.target.toFixed(2)}</p>
+                        <button data-id="${docSnap.id}" class="delete-goal-btn mt-2 bg-red-500 text-white text-sm font-semibold py-1 px-2 rounded-lg hover:bg-red-600 transition-colors duration-200">Delete</button>
+                    `;
+                    goalsList.appendChild(item);
+                });
+            });
+        }
+        
+        goalsList.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('delete-goal-btn')) {
+                const goalId = e.target.dataset.id;
+                try {
+                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/goals`, goalId));
+                    showMessage("Success", "Goal deleted successfully.");
+                } catch (error) {
+                    console.error("Error deleting goal:", error);
+                    showMessage("Error", "Failed to delete goal.");
+                }
+            }
+        });
+
+        // Bills logic
+        billsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = billNameInput.value;
+            const amount = parseFloat(billAmountInput.value);
+            const dueDate = billDateInput.value;
+            if (name && !isNaN(amount) && amount > 0 && dueDate) {
+                try {
+                    await addDoc(collection(db, `artifacts/${appId}/users/${userId}/bills`), {
+                        name,
+                        amount,
+                        dueDate,
+                        paid: false,
+                        timestamp: new Date()
+                    });
+                    showMessage("Success", "Bill added successfully!");
+                    billsForm.reset();
+                } catch (e) {
+                    console.error("Error adding bill:", e);
+                    showMessage("Error", "Failed to add bill.");
+                }
+            }
+        });
+
+        function listenForBills(currentUserId) {
+            const path = `artifacts/${appId}/users/${currentUserId}/bills`;
+            onSnapshot(collection(db, path), (snapshot) => {
+                billsList.innerHTML = '';
+                if (snapshot.empty) {
+                    billsList.innerHTML = '<p class="text-center">No bills added yet.</p>';
+                    return;
+                }
+                const now = new Date();
+                snapshot.forEach(docSnap => {
+                    const bill = { id: docSnap.id, ...docSnap.data() };
+                    const dueDate = new Date(bill.dueDate);
+                    const isOverdue = dueDate < now && !bill.paid;
+                    
+                    const item = document.createElement('div');
+                    item.className = 'p-4 rounded-lg border flex items-center justify-between';
+                    item.style.backgroundColor = 'var(--bg-tertiary)';
+                    item.style.borderColor = 'var(--border-color)';
+                    
+                    const statusColor = isOverdue ? 'text-red-500' : (bill.paid ? 'text-green-500' : 'text-orange-500');
+                    const statusText = isOverdue ? 'Overdue' : (bill.paid ? 'Paid' : 'Upcoming');
+
+                    item.innerHTML = `
+                        <div>
+                            <h3 class="font-semibold ${statusColor}">${bill.name}</h3>
+                            <p class="text-sm text-secondary">$${bill.amount.toFixed(2)} - Due: ${bill.dueDate}</p>
+                            <span class="text-xs font-bold ${statusColor}">${statusText}</span>
+                        </div>
+                        <div class="flex space-x-2">
+                            ${!bill.paid ? `<button data-id="${bill.id}" class="mark-paid-btn bg-green-500 text-white text-sm font-semibold py-1 px-2 rounded-lg hover:bg-green-600">Paid</button>` : ''}
+                            <button data-id="${bill.id}" class="delete-bill-btn bg-red-500 text-white text-sm font-semibold py-1 px-2 rounded-lg hover:bg-red-600 transition-colors duration-200">Delete</button>
+                        </div>
+                    `;
+                    billsList.appendChild(item);
+                });
+            });
+        }
+
+        billsList.addEventListener('click', async (e) => {
+            const target = e.target;
+            const billId = target.dataset.id;
+            if (target.classList.contains('delete-bill-btn')) {
+                try {
+                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/bills`, billId));
+                    showMessage("Success", "Bill deleted successfully.");
+                } catch (error) {
+                    console.error("Error deleting bill:", error);
+                    showMessage("Error", "Failed to delete bill.");
+                }
+            } else if (target.classList.contains('mark-paid-btn')) {
+                try {
+                    await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/bills`, billId), {
+                        paid: true
+                    });
+                    showMessage("Success", "Bill marked as paid.");
+                } catch (error) {
+                    console.error("Error updating bill:", error);
+                    showMessage("Error", "Failed to mark bill as paid.");
+                }
+            }
+        });
+        
         // Listen for real-time transaction updates
         function listenForTransactions(currentUserId, isPublic) {
             const path = isPublic ? `artifacts/${appId}/public/data/${currentUserId}/transactions` : `artifacts/${appId}/users/${currentUserId}/transactions`;
@@ -728,6 +1228,8 @@
                 let monthlyExpensesData = {};
                 let balanceData = {};
                 let runningBalance = 0;
+                
+                let monthlyCategoryData = {};
 
                 snapshot.forEach(doc => {
                     const transaction = { id: doc.id, ...doc.data() };
@@ -752,8 +1254,17 @@
                         }
                         const currentCategoryAmount = monthlyExpensesData[monthYear][category] || 0;
                         monthlyExpensesData[monthYear][category] = currentCategoryAmount + transaction.amount;
+                        
+                        // Data for spending trends chart
+                        if (!monthlyCategoryData[monthYear]) {
+                            monthlyCategoryData[monthYear] = {};
+                        }
+                        const currentTrendAmount = monthlyCategoryData[monthYear][category] || 0;
+                        monthlyCategoryData[monthYear][category] = currentTrendAmount + transaction.amount;
                     }
                 });
+                
+                currentTransactions = allTransactions;
 
                 // Sort transactions chronologically to build balance over time chart
                 allTransactions.sort((a, b) => a.timestamp.toDate() - b.timestamp.toDate());
@@ -834,7 +1345,7 @@
                 updatePieChart(expenseCategories);
                 updateTotalBalance(totalIncome, totalExpense);
                 renderBudgetStatus(expenseCategories);
-                renderCharts(monthlyExpensesData, balanceData);
+                renderCharts(monthlyExpensesData, balanceData, monthlyCategoryData);
             }, (error) => {
                 console.error("Error listening to documents: ", error);
                 showMessage("Database Error", "Failed to load transactions. Please check your connection.");
@@ -950,14 +1461,16 @@
 
             pieChartContainer.innerHTML = svgContent + legendHtml;
         }
-
+        
         // Function to render the new charts
-        function renderCharts(monthlyExpensesData, balanceData) {
+        function renderCharts(monthlyExpensesData, balanceData, monthlyCategoryData) {
             const expenseChartCtx = document.getElementById('expensesChart').getContext('2d');
             const balanceChartCtx = document.getElementById('balanceChart').getContext('2d');
+            const spendingTrendsCtx = document.getElementById('spendingTrendsChart').getContext('2d');
 
             if (expensesChart) expensesChart.destroy();
             if (balanceChart) balanceChart.destroy();
+            if (spendingTrendsChart) spendingTrendsChart.destroy();
             
             const months = Object.keys(monthlyExpensesData).sort();
             const datasets = [];
@@ -1004,6 +1517,33 @@
                     responsive: true,
                     scales: {
                         y: { beginAtZero: false }
+                    }
+                }
+            });
+            
+            const trendDatasets = [];
+            Object.keys(categoryColors).filter(c => c !== 'Income').forEach(category => {
+                trendDatasets.push({
+                    label: category,
+                    data: months.map(month => monthlyCategoryData[month]?.[category] || 0),
+                    backgroundColor: categoryColors[category],
+                    borderColor: 'transparent',
+                    fill: 'stack',
+                    tension: 0.4,
+                });
+            });
+            
+            spendingTrendsChart = new Chart(spendingTrendsCtx, {
+                type: 'line',
+                data: {
+                    labels: months.map(m => new Date(m).toLocaleString('default', { month: 'short', year: 'numeric' })),
+                    datasets: trendDatasets
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true }
                     }
                 }
             });
@@ -1158,7 +1698,77 @@
             document.execCommand('copy');
             showMessage("Success", "The shareable link has been copied to your clipboard!");
         });
+        
+        // AI Advisor logic
+        getAdviceBtn.addEventListener('click', async () => {
+            if (!userId) {
+                showMessage("Authentication Required", "Please sign in to get financial advice.");
+                return;
+            }
 
+            advisorLoadingIndicator.classList.remove('hidden');
+            advisorResults.classList.add('hidden');
+            advisorText.innerHTML = '';
+            
+            const totalIncome = currentTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+            const totalExpense = currentTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+            const totalSavings = totalIncome - totalExpense;
+            const savingsRate = totalIncome > 0 ? (totalSavings / totalIncome) * 100 : 0;
+            
+            try {
+                const prompt = `Act as a financial advisor. Analyze the following financial data and provide actionable advice on saving and investing.
+                
+                Financial Data:
+                - Total Income: $${totalIncome.toFixed(2)}
+                - Total Expenses: $${totalExpense.toFixed(2)}
+                - Savings Rate: ${savingsRate.toFixed(2)}%
+
+                Provide your advice in a structured, easy-to-read format. Include specific, multiple options for both saving and investing.
+
+                For Savings, provide advice on where to store money for short-term goals.
+                For Investing, provide advice on long-term growth options.
+
+                Your response should be formatted using markdown.`;
+                
+                const payload = {
+                    contents: [{
+                        parts: [{ text: prompt }]
+                    }],
+                    model: 'gemini-2.5-flash-preview-05-20'
+                };
+                
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                const advice = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (advice) {
+                    const markdown = new showdown.Converter();
+                    advisorText.innerHTML = markdown.makeHtml(advice);
+                    advisorResults.classList.remove('hidden');
+                } else {
+                    showMessage("AI Error", "Could not retrieve financial advice. Please try again.");
+                }
+
+            } catch (error) {
+                console.error("AI Advice API Error:", error);
+                showMessage("API Error", "Failed to connect to the financial advisor service. Please try again.");
+            } finally {
+                advisorLoadingIndicator.classList.add('hidden');
+            }
+        });
+        
+        const showdownScript = document.createElement('script');
+        showdownScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js';
+        document.head.appendChild(showdownScript);
+        
     </script>
 </body>
 </html>
