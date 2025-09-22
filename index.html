@@ -578,6 +578,33 @@
                 showMessage("Error", error.message);
             }
         });
+        
+        const signInWithTokenOrAnonymously = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                    console.log("Signed in with custom token.");
+                } else {
+                    await signInAnonymously(auth);
+                    console.log("Signed in anonymously.");
+                }
+            } catch (error) {
+                console.error("Initial auth error:", error);
+                if (error.code === 'auth/custom-token-mismatch' || error.code === 'auth/invalid-custom-token') {
+                     // Fallback to anonymous sign-in if custom token fails
+                    try {
+                        await signInAnonymously(auth);
+                        console.log("Signed in anonymously as fallback.");
+                    } catch (e) {
+                        console.error("Anonymous sign-in fallback failed:", e);
+                    }
+                } else {
+                    console.error("Unhandled initial auth error:", error);
+                }
+            }
+        };
+        
+        signInWithTokenOrAnonymously();
 
         // Initialize Firebase Authentication
         onAuthStateChanged(auth, async (user) => {
