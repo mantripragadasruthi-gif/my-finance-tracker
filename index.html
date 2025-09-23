@@ -579,34 +579,7 @@
             }
         });
         
-        const signInWithTokenOrAnonymously = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                    console.log("Signed in with custom token.");
-                } else {
-                    await signInAnonymously(auth);
-                    console.log("Signed in anonymously.");
-                }
-            } catch (error) {
-                console.error("Initial auth error:", error);
-                if (error.code === 'auth/custom-token-mismatch' || error.code === 'auth/invalid-custom-token') {
-                     // Fallback to anonymous sign-in if custom token fails
-                    try {
-                        await signInAnonymously(auth);
-                        console.log("Signed in anonymously as fallback.");
-                    } catch (e) {
-                        console.error("Anonymous sign-in fallback failed:", e);
-                    }
-                } else {
-                    console.error("Unhandled initial auth error:", error);
-                }
-            }
-        };
-        
-        signInWithTokenOrAnonymously();
-
-        // Initialize Firebase Authentication
+        // This is the core authentication logic for the live app
         onAuthStateChanged(auth, async (user) => {
             if (isPublicView) {
                 userId = publicUserId;
@@ -628,11 +601,20 @@
                 listenForBills(userId);
                 renderBudgetInputs();
             } else {
-                userId = null;
-                userIdEl.textContent = 'Not signed in';
-                authButtons.classList.remove('hidden');
-                userInfo.classList.add('hidden');
-                privateSection.classList.add('hidden');
+                // If a user is not signed in, try to sign them in anonymously
+                try {
+                    const tempUser = await signInAnonymously(auth);
+                    userId = tempUser.user.uid;
+                    userIdEl.textContent = userId;
+                    userDisplay.textContent = 'Welcome, Guest!';
+                    authButtons.classList.remove('hidden');
+                    userInfo.classList.add('hidden');
+                    privateSection.classList.add('hidden');
+                } catch (error) {
+                    console.error("Anonymous sign-in failed:", error);
+                    userIdEl.textContent = 'Error';
+                    showMessage("Authentication Error", "Could not sign in automatically. Please use the sign-in options above.");
+                }
             }
         });
         
