@@ -579,21 +579,34 @@
             }
         });
         
-        // This is the core authentication logic for the live app
+        // This is the CRITICAL change: Try to sign in anonymously IMMEDIATELY
+        // This ensures the user is authenticated and bypasses browser security hang-ups.
+        if (!isPublicView) {
+            signInAnonymously(auth).catch(error => {
+                console.error("Initial Anonymous sign-in failed:", error);
+                // If it fails, the onAuthStateChanged listener below will still catch the unauthenticated state.
+            });
+        }
+        
+        // This is the core authentication listener
         onAuthStateChanged(auth, async (user) => {
             if (isPublicView) {
+                // Public View Logic
                 userId = publicUserId;
                 userIdEl.textContent = userId;
                 setPublicMode(true);
                 listenForBudgets(userId, true);
                 listenForTransactions(userId, true);
             } else if (user) {
+                // User is signed in (either real or anonymous)
                 userId = user.uid;
                 userIdEl.textContent = userId;
                 userDisplay.textContent = `Welcome, ${user.email || 'Anonymous User'}!`;
                 authButtons.classList.add('hidden');
                 userInfo.classList.remove('hidden');
                 privateSection.classList.remove('hidden');
+                
+                // Start listening for data
                 listenForBudgets(userId, false);
                 listenForTransactions(userId, false);
                 listenForRecurringTransactions(userId);
@@ -601,20 +614,12 @@
                 listenForBills(userId);
                 renderBudgetInputs();
             } else {
-                // If a user is not signed in, try to sign them in anonymously
-                try {
-                    const tempUser = await signInAnonymously(auth);
-                    userId = tempUser.user.uid;
-                    userIdEl.textContent = userId;
-                    userDisplay.textContent = 'Welcome, Guest!';
-                    authButtons.classList.remove('hidden');
-                    userInfo.classList.add('hidden');
-                    privateSection.classList.add('hidden');
-                } catch (error) {
-                    console.error("Anonymous sign-in failed:", error);
-                    userIdEl.textContent = 'Error';
-                    showMessage("Authentication Error", "Could not sign in automatically. Please use the sign-in options above.");
-                }
+                // User is explicitly logged out
+                userId = null;
+                userIdEl.textContent = 'Not signed in';
+                authButtons.classList.remove('hidden');
+                userInfo.classList.add('hidden');
+                privateSection.classList.add('hidden');
             }
         });
         
